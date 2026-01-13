@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Letterboxd Wrapped</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --surface: #141414;
+            --surface-hover: #1a1a1a;
+            --orange: #ff8000;
+            --orange-glow: rgba(255, 128, 0, 0.15);
+            --green: #00e054;
+            --green-glow: rgba(0, 224, 84, 0.15);
+            --blue: #40bcf4;
+            --pink: #ff6b9d;
+            --purple: #a855f7;
+            --text: #ffffff;
+            --text-dim: rgba(255,255,255,0.7);
+            --text-muted: rgba(255,255,255,0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+
+        /* Film grain */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            opacity: 0.025;
+            pointer-events: none;
+            z-index: 10000;
+        }
+
+        /* ========== LANDING ========== */
+        .landing {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: radial-gradient(ellipse at 50% 20%, var(--orange-glow), transparent 60%);
+        }
+
+        .logo { font-size: 4rem; margin-bottom: 0.5rem; }
+        
+        .landing h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(2.5rem, 10vw, 4.5rem);
+            letter-spacing: 0.03em;
+            margin-bottom: 0.25rem;
+        }
+
+        .landing .tagline {
+            color: var(--text-dim);
+            font-size: 1.1rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .input-group {
+            width: 100%;
+            max-width: 380px;
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .input-box {
+            display: flex;
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .input-box:focus-within {
+            border-color: var(--orange);
+        }
+
+        .input-prefix {
+            padding: 1rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            background: rgba(255,255,255,0.02);
+            white-space: nowrap;
+        }
+
+        .input-box input {
+            flex: 1;
+            padding: 1rem;
+            padding-left: 0;
+            border: none;
+            background: transparent;
+            color: var(--text);
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+            min-width: 0;
+        }
+
+        .year-btns {
+            display: none;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            max-width: 380px;
+        }
+
+        .year-btns.visible { display: flex; }
+
+        .year-btn {
+            padding: 0.6rem 1.4rem;
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 100px;
+            color: var(--text-dim);
+            font-family: inherit;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .year-btn:hover { border-color: var(--orange); color: var(--text); }
+        
+        .year-btn.active {
+            background: var(--orange);
+            border-color: var(--orange);
+            color: #000;
+            font-weight: 600;
+        }
+
+        .btn-generate {
+            padding: 1rem 3rem;
+            background: linear-gradient(135deg, var(--orange), #ff6b35);
+            border: none;
+            border-radius: 100px;
+            color: #000;
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            transition: all 0.3s;
+        }
+
+        .btn-generate:hover:not(:disabled) {
+            transform: scale(1.03);
+            box-shadow: 0 8px 30px rgba(255,128,0,0.3);
+        }
+
+        .btn-generate:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .error-msg {
+            margin-top: 1.5rem;
+            padding: 1rem 1.5rem;
+            background: rgba(255,60,60,0.1);
+            border: 1px solid rgba(255,60,60,0.2);
+            border-radius: 8px;
+            color: #ff6b6b;
+            max-width: 380px;
+            text-align: center;
+        }
+
+        /* ========== LOADING ========== */
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .loading-screen.active { display: flex; }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--orange);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 1.5rem;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-text {
+            color: var(--text-dim);
+            font-size: 1rem;
+        }
+
+        /* ========== WRAPPED CONTAINER ========== */
+        .wrapped {
+            display: none;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .wrapped.active { display: block; }
+
+        .slides {
+            height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
+        }
+
+        .slides::-webkit-scrollbar { display: none; }
+
+        /* ========== SLIDE BASE ========== */
+        .slide {
+            min-height: 100vh;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            padding-bottom: 4rem;
+            position: relative;
+        }
+
+        /* ========== PROGRESS DOTS ========== */
+        .dots {
+            position: fixed;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 50;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .dot.active {
+            background: var(--orange);
+            transform: scale(1.4);
+        }
+
+        @media (max-width: 480px) {
+            .dots { right: 0.5rem; }
+            .dot { width: 5px; height: 5px; }
+        }
+
+        /* ========== TYPOGRAPHY ========== */
+        .mega-num {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(5rem, 22vw, 14rem);
+            line-height: 0.9;
+            background: linear-gradient(135deg, var(--orange), var(--pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .slide-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(2rem, 7vw, 3.5rem);
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .slide-title span { color: var(--orange); }
+
+        .sub-text {
+            color: var(--text-dim);
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            text-align: center;
+            max-width: 400px;
+        }
+
+        /* ========== SLIDE 1: COVER ========== */
+        .slide-cover {
+            background: radial-gradient(ellipse at 50% 30%, var(--orange-glow), transparent 50%);
+        }
+
+        .cover-year-bg {
+            position: absolute;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(8rem, 35vw, 20rem);
+            color: rgba(255,255,255,0.03);
+            pointer-events: none;
+        }
+
+        .cover-content { text-align: center; z-index: 1; }
+
+        .cover-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: var(--orange);
+            margin-bottom: 1rem;
+        }
+
+        .cover-stat {
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            color: var(--text-dim);
+            margin-top: 0.5rem;
+        }
+
+        .cover-hours {
+            font-size: clamp(1.1rem, 3.5vw, 1.4rem);
+            color: var(--orange);
+            margin-top: 1rem;
+            font-weight: 600;
+        }
+
+        .cover-profile {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-top: 2rem;
+            padding: 0.4rem 1rem 0.4rem 0.4rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 100px;
+        }
+
+        .cover-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* ========== SLIDE 2: HOOK ========== */
+        .slide-hook {
+            background: radial-gradient(ellipse at 50% 50%, var(--green-glow), transparent 50%);
+        }
+
+        .hook-prefix { 
+            font-size: clamp(1rem, 3vw, 1.3rem); 
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .hook-num {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(6rem, 25vw, 12rem);
+            color: var(--green);
+            line-height: 0.9;
+        }
+
+        .hook-unit {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(2rem, 7vw, 4rem);
+            margin-bottom: 0.5rem;
+        }
+
+        /* ========== SLIDE 3: TOP MOVIES ========== */
+        .slide-top-movies { padding: 1.5rem; }
+
+        .poster-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .poster-card {
+            position: relative;
+            aspect-ratio: 2/3;
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--surface);
+        }
+
+        .poster-card:first-child {
+            grid-column: span 2;
+            aspect-ratio: 16/9;
+        }
+
+        .poster-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .poster-rank {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 26px;
+            height: 26px;
+            background: var(--orange);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: #000;
+        }
+
+        .poster-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 2.5rem 0.75rem 0.75rem;
+            background: linear-gradient(transparent, rgba(0,0,0,0.85));
+        }
+
+        .poster-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        .poster-stars {
+            color: var(--orange);
+            font-size: 0.7rem;
+            margin-top: 2px;
+        }
+
+        .poster-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            display: flex;
+            align-items: flex-end;
+            padding: 1rem;
+        }
+
+        /* ========== SLIDE 4: GENRE DNA ========== */
+        .slide-genre {
+            background: radial-gradient(ellipse at 50% 50%, rgba(64,188,244,0.1), transparent 50%);
+        }
+
+        .genre-chart {
+            width: 100%;
+            max-width: 380px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .genre-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .genre-name {
+            width: 90px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .genre-bar-bg {
+            flex: 1;
+            height: 28px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .genre-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--blue), var(--green));
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #000;
+            transition: width 1s ease;
+        }
+
+        /* ========== SLIDE 5: DIRECTORS ========== */
+        .slide-directors {
+            background: radial-gradient(ellipse at 50% 50%, rgba(255,107,157,0.1), transparent 50%);
+        }
+
+        .directors-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .director-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+        }
+
+        .director-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--pink), var(--orange));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            text-transform: uppercase;
+        }
+
+        .director-name { 
+            font-weight: 600; 
+            font-size: 1rem;
+        }
+
+        /* ========== SLIDE 6: ACTORS ========== */
+        .slide-actors {
+            background: radial-gradient(ellipse at 50% 50%, rgba(168,85,247,0.1), transparent 50%);
+        }
+
+        .actors-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .actor-card {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0.75rem;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .actor-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--purple), var(--blue));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            text-transform: uppercase;
+        }
+
+        .actor-name { 
+            font-size: 0.85rem; 
+            font-weight: 600; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis;
+            flex: 1;
+            min-width: 0;
+        }
+
+        @media (max-width: 400px) {
+            .actors-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ========== SLIDE 7: RATING STYLE ========== */
+        .slide-ratings {
+            background: radial-gradient(ellipse at 50% 50%, var(--orange-glow), transparent 50%);
+        }
+
+        .rating-avg {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(1.8rem, 6vw, 2.5rem);
+            color: var(--orange);
+            margin-bottom: 1.5rem;
+        }
+
+        .rating-chart {
+            width: 100%;
+            max-width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .rating-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .rating-bar-label {
+            width: 70px;
+            font-size: 0.75rem;
+            color: var(--orange);
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .rating-bar-track {
+            flex: 1;
+            height: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .rating-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--orange), var(--pink));
+            border-radius: 4px;
+            min-width: 2px;
+        }
+
+        .rating-bar-count {
+            width: 24px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: left;
+        }
+
+        .rating-posters {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .rating-poster-item {
+            text-align: center;
+        }
+
+        .rating-poster-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .rating-poster-img {
+            width: 80px;
+            aspect-ratio: 2/3;
+            border-radius: 6px;
+            overflow: hidden;
+            background: var(--surface);
+            margin-bottom: 0.4rem;
+        }
+
+        .rating-poster-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .rating-poster-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+        }
+
+        .rating-poster-stars {
+            font-size: 0.7rem;
+            color: var(--orange);
+        }
+
+        /* ========== SLIDE 8: HIDDEN GEM ========== */
+        .slide-hidden-gem {
+            background: radial-gradient(ellipse at 50% 50%, rgba(0,224,84,0.1), transparent 50%);
+        }
+
+        .gem-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: var(--green);
+            margin-bottom: 1.5rem;
+        }
+
+        .gem-poster {
+            width: 180px;
+            aspect-ratio: 2/3;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .gem-poster img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gem-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+
+        .gem-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            text-align: center;
+            max-width: 300px;
+        }
+
+        .gem-subtitle {
+            color: var(--text-dim);
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        /* ========== SLIDE 9: MOVIE ERA ========== */
+        .slide-era {
+            background: radial-gradient(ellipse at 50% 50%, rgba(128,0,255,0.1), transparent 50%);
+        }
+
+        .era-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .era-emoji { font-size: 4rem; margin-bottom: 1rem; }
+
+        .era-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(2.5rem, 10vw, 5rem);
+            text-align: center;
+            line-height: 1;
+            margin-bottom: 0.75rem;
+        }
+
+        .era-subtitle {
+            color: var(--text-dim);
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        /* ========== SLIDE 9: SHARE ========== */
+        .slide-share {
+            background: linear-gradient(160deg, #1a0800, #0a0a0a 50%, #001808);
+        }
+
+        .share-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(2rem, 8vw, 3.5rem);
+            margin-bottom: 0.5rem;
+        }
+
+        .share-subtitle {
+            color: var(--text-dim);
+            margin-bottom: 2rem;
+        }
+
+        .share-card {
+            width: 100%;
+            max-width: 280px;
+            padding: 1.25rem;
+            background: var(--surface);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 2rem;
+        }
+
+        .share-posters {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .share-poster {
+            flex: 1;
+            aspect-ratio: 2/3;
+            border-radius: 4px;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        .share-poster img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .share-stats {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .share-stat { text-align: center; }
+
+        .share-stat-num {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.4rem;
+            color: var(--orange);
+        }
+
+        .share-stat-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .share-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            width: 100%;
+            max-width: 280px;
+        }
+
+        .btn-share {
+            padding: 0.9rem;
+            background: linear-gradient(135deg, var(--orange), #ff6b35);
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-share:hover { transform: scale(1.02); }
+
+        .btn-restart {
+            padding: 0.9rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            color: var(--text-dim);
+            font-family: inherit;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-restart:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--text);
+        }
+
+        /* ========== ANIMATIONS ========== */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(25px);
+            animation: fadeUp 0.7s ease forwards;
+        }
+
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .delay-1 { animation-delay: 0.15s; }
+        .delay-2 { animation-delay: 0.3s; }
+        .delay-3 { animation-delay: 0.45s; }
+        .delay-4 { animation-delay: 0.6s; }
+        .delay-5 { animation-delay: 0.75s; }
+
+        /* Screen states */
+        .screen { display: none; }
+        .screen.active { display: flex; flex-direction: column; }
+
+        /* Desktop enhancements */
+        @media (min-width: 768px) {
+            .slide { padding: 3rem; }
+            
+            .poster-grid {
+                max-width: 500px;
+                gap: 14px;
+            }
+            
+            .genre-chart, .people-list { max-width: 450px; }
+            
+            .actors-grid {
+                max-width: 500px;
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LANDING -->
+    <div id="landing" class="screen active landing">
+        <div class="logo">🎬</div>
+        <h1>Letterboxd Wrapped</h1>
+        <p class="tagline">Your year in film, beautifully told</p>
+        
+        <div class="input-group">
+            <label>Letterboxd Username</label>
+            <div class="input-box">
+                <span class="input-prefix">letterboxd.com/</span>
+                <input type="text" id="usernameInput" placeholder="username" autocomplete="off">
+            </div>
+        </div>
+        
+        <div id="yearBtns" class="year-btns">
+            <button class="year-btn" data-year="2025">2025</button>
+            <button class="year-btn active" data-year="2024">2024</button>
+            <button class="year-btn" data-year="2023">2023</button>
+            <button class="year-btn" data-year="2022">2022</button>
+        </div>
+        
+        <button id="generateBtn" class="btn-generate" disabled>Generate My Wrapped</button>
+        
+        <div id="errorBox"></div>
+    </div>
+
+    <!-- LOADING -->
+    <div id="loading" class="loading-screen">
+        <div class="spinner"></div>
+        <p class="loading-text">Rewinding your cinema year...</p>
+        <p class="loading-text" style="font-size:0.85rem; color:var(--text-muted); margin-top:0.5rem;">(This may take 10-15 seconds)</p>
+    </div>
+
+    <!-- WRAPPED -->
+    <div id="wrapped" class="wrapped">
+        <div class="slides" id="slidesContainer"></div>
+        <div class="dots" id="dotsContainer"></div>
+    </div>
+
+    <script>
+        // State
+        let data = null;
+        let selectedYear = '2024';
+        let currentSlide = 0;
+        let slideCount = 0;
+
+        // Elements
+        const usernameInput = document.getElementById('usernameInput');
+        const yearBtns = document.getElementById('yearBtns');
+        const generateBtn = document.getElementById('generateBtn');
+        const errorBox = document.getElementById('errorBox');
+        const landing = document.getElementById('landing');
+        const loading = document.getElementById('loading');
+        const wrapped = document.getElementById('wrapped');
+        const slidesContainer = document.getElementById('slidesContainer');
+        const dotsContainer = document.getElementById('dotsContainer');
+
+        // Event listeners
+        usernameInput.addEventListener('input', () => {
+            const hasVal = usernameInput.value.trim().length > 0;
+            yearBtns.classList.toggle('visible', hasVal);
+            generateBtn.disabled = !hasVal;
+        });
+
+        usernameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !generateBtn.disabled) generate();
+        });
+
+        document.querySelectorAll('.year-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.year-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedYear = btn.dataset.year;
+            });
+        });
+
+        generateBtn.addEventListener('click', generate);
+
+        // Generate
+        async function generate() {
+            const username = usernameInput.value.trim();
+            if (!username) return;
+
+            landing.classList.remove('active');
+            loading.classList.add('active');
+            errorBox.innerHTML = '';
+
+            try {
+                const res = await fetch(`/api/wrapped/${username}/${selectedYear}`);
+                const json = await res.json();
+
+                if (json.error) {
+                    showError(json.error);
+                    return;
+                }
+
+                data = json;
+                buildSlides(json);
+
+                loading.classList.remove('active');
+                wrapped.classList.add('active');
+
+                setupObserver();
+
+            } catch (err) {
+                showError('Could not connect. Please try again.');
+            }
+        }
+
+        function showError(msg) {
+            loading.classList.remove('active');
+            landing.classList.add('active');
+            errorBox.innerHTML = `<div class="error-msg">${msg}</div>`;
+        }
+
+        // Build slides
+        function buildSlides(d) {
+            const slides = [];
+            const year = d.year;
+
+            // 1. COVER
+            const hoursText = d.hours_watched ? `<p class="cover-hours fade-up delay-3">${d.hours_watched} hours of cinema</p>` : '';
+            
+            slides.push(`
+                <div class="slide slide-cover" data-idx="0">
+                    <div class="cover-year-bg">${year}</div>
+                    <div class="cover-content">
+                        <p class="cover-label fade-up">Your ${year} Year in Film</p>
+                        <div class="mega-num fade-up delay-1" id="filmNum">0</div>
+                        <p class="cover-stat fade-up delay-2">films watched</p>
+                        ${hoursText}
+                        <div class="cover-profile fade-up delay-4">
+                            <img class="cover-avatar" src="${d.profile_pic || ''}" alt="" onerror="this.style.display='none'">
+                            <span>${d.display_name}</span>
+                        </div>
+                    </div>
+                </div>
+            `);
+
+            // 2. HOOK - Days
+            const days = d.days_equivalent || (d.hours_watched ? Math.round(d.hours_watched / 24 * 10) / 10 : 0);
+            if (days > 0) {
+                slides.push(`
+                    <div class="slide slide-hook" data-idx="${slides.length}">
+                        <p class="hook-prefix fade-up">You spent the equivalent of</p>
+                        <div class="hook-num fade-up delay-1" id="daysNum">0</div>
+                        <div class="hook-unit fade-up delay-2">full days</div>
+                        <p class="sub-text fade-up delay-3">inside movies this year</p>
+                    </div>
+                `);
+            }
+
+            // 3. TOP MOVIES
+            const movies = d.top_films?.length ? d.top_films : [];
+            if (movies.length > 0) {
+                const cards = movies.slice(0, 4).map((f, i) => {
+                    const hasPoster = f.poster && !f.poster.includes('empty-poster');
+                    return `
+                        <div class="poster-card fade-up delay-${i + 1}">
+                            ${hasPoster 
+                                ? `<img src="${f.poster}" alt="${f.title}" onerror="this.parentElement.innerHTML='<div class=poster-placeholder><span class=poster-name>${f.title}</span></div>'">` 
+                                : `<div class="poster-placeholder"><span class="poster-name">${f.title}</span></div>`
+                            }
+                            <span class="poster-rank">#${i + 1}</span>
+                            <div class="poster-info">
+                                <div class="poster-name">${f.title}</div>
+                                ${f.stars ? `<div class="poster-stars">${f.stars}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                slides.push(`
+                    <div class="slide slide-top-movies" data-idx="${slides.length}">
+                        <h2 class="slide-title fade-up">Your <span>Top Films</span></h2>
+                        <div class="poster-grid">${cards}</div>
+                    </div>
+                `);
+            }
+
+            // 4. GENRE DNA
+            if (d.genres?.length > 0) {
+                const total = d.genres.reduce((s, g) => s + (g.count || 0), 0);
+                const bars = d.genres.slice(0, 5).map((g, i) => {
+                    const pct = total > 0 ? Math.round((g.count / total) * 100) : 0;
+                    return `
+                        <div class="genre-row fade-up delay-${i + 1}">
+                            <span class="genre-name">${g.name}</span>
+                            <div class="genre-bar-bg">
+                                <div class="genre-bar" style="width:0" data-pct="${pct}">${pct}%</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                slides.push(`
+                    <div class="slide slide-genre" data-idx="${slides.length}">
+                        <h2 class="slide-title fade-up">Your <span>Genre DNA</span></h2>
+                        <div class="genre-chart">${bars}</div>
+                    </div>
+                `);
+            }
+
+            // 5. DIRECTORS
+            if (d.directors?.length > 0) {
+                const rows = d.directors.slice(0, 5).map((dir, i) => `
+                    <div class="director-card fade-up delay-${i + 1}">
+                        <div class="director-avatar">${dir.name.charAt(0)}</div>
+                        <div class="director-name">${dir.name}</div>
+                    </div>
+                `).join('');
+
+                slides.push(`
+                    <div class="slide slide-directors" data-idx="${slides.length}">
+                        <h2 class="slide-title fade-up">Directors You <span>Loved</span></h2>
+                        <div class="directors-grid">${rows}</div>
+                    </div>
+                `);
+            }
+
+            // 6. ACTORS
+            if (d.actors?.length > 0) {
+                const cards = d.actors.slice(0, 8).map((a, i) => `
+                    <div class="actor-card fade-up delay-${Math.min(i + 1, 5)}">
+                        <div class="actor-avatar">${a.name.charAt(0)}</div>
+                        <div class="actor-name">${a.name}</div>
+                    </div>
+                `).join('');
+
+                slides.push(`
+                    <div class="slide slide-actors" data-idx="${slides.length}">
+                        <h2 class="slide-title fade-up">Actors on <span>Your Screen</span></h2>
+                        <div class="actors-grid">${cards}</div>
+                    </div>
+                `);
+            }
+
+            // 7. RATING STYLE
+            if (d.star_distribution || d.top_films?.length > 0) {
+                const dist = d.star_distribution || {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+                const maxCount = Math.max(...Object.values(dist), 1);
+                
+                // Build bar chart
+                const bars = [5, 4, 3, 2, 1].map(star => {
+                    const count = dist[star] || 0;
+                    const pct = Math.round((count / maxCount) * 100);
+                    return `
+                        <div class="rating-bar-row">
+                            <span class="rating-bar-label">${'★'.repeat(star)}</span>
+                            <div class="rating-bar-track">
+                                <div class="rating-bar-fill" style="width: ${pct}%" data-count="${count}"></div>
+                            </div>
+                            <span class="rating-bar-count">${count}</span>
+                        </div>
+                    `;
+                }).join('');
+                
+                // Highest and lowest posters
+                const highest = d.highest_rated_film;
+                const lowest = d.lowest_rated_film;
+                
+                const postersHtml = (highest || lowest) ? `
+                    <div class="rating-posters fade-up delay-4">
+                        ${highest ? `
+                            <div class="rating-poster-item">
+                                <div class="rating-poster-label">Highest</div>
+                                <div class="rating-poster-img">
+                                    <img src="${highest.poster || ''}" alt="${highest.title}" onerror="this.parentElement.innerHTML='<div class=rating-poster-placeholder>🏆</div>'">
+                                </div>
+                                <div class="rating-poster-stars">${highest.stars || '★'.repeat(Math.round(highest.rating || 0))}</div>
+                            </div>
+                        ` : ''}
+                        ${lowest && lowest.title !== highest?.title ? `
+                            <div class="rating-poster-item">
+                                <div class="rating-poster-label">Lowest</div>
+                                <div class="rating-poster-img">
+                                    <img src="${lowest.poster || ''}" alt="${lowest.title}" onerror="this.parentElement.innerHTML='<div class=rating-poster-placeholder>📉</div>'">
+                                </div>
+                                <div class="rating-poster-stars">${lowest.stars || '★'.repeat(Math.round(lowest.rating || 0))}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : '';
+
+                slides.push(`
+                    <div class="slide slide-ratings" data-idx="${slides.length}">
+                        <h2 class="slide-title fade-up">Your <span>Rating Style</span></h2>
+                        ${d.average_rating ? `<p class="rating-avg fade-up delay-1">★${d.average_rating.toFixed(1)} average</p>` : ''}
+                        <div class="rating-chart fade-up delay-2">${bars}</div>
+                        ${postersHtml}
+                    </div>
+                `);
+            }
+
+            // 8. HIDDEN GEM (Most Obscure)
+            if (d.highs_lows?.most_obscure) {
+                const obscure = d.highs_lows.most_obscure;
+                const hasPoster = obscure.poster && !obscure.poster.includes('empty');
+                
+                slides.push(`
+                    <div class="slide slide-hidden-gem" data-idx="${slides.length}">
+                        <p class="gem-label fade-up">Your Hidden Gem</p>
+                        <div class="gem-poster fade-up delay-1">
+                            ${hasPoster 
+                                ? `<img src="${obscure.poster}" alt="${obscure.title}" onerror="this.style.display='none'">` 
+                                : `<div class="gem-placeholder">🎬</div>`
+                            }
+                        </div>
+                        <h2 class="gem-title fade-up delay-2">${obscure.title}</h2>
+                        <p class="gem-subtitle fade-up delay-3">You discovered this before it was cool</p>
+                    </div>
+                `);
+            }
+
+            // 9. MOVIE ERA
+            if (d.movie_era) {
+                slides.push(`
+                    <div class="slide slide-era" data-idx="${slides.length}">
+                        <p class="era-label fade-up">Your ${year} Movie Era</p>
+                        <div class="era-emoji fade-up delay-1">${d.movie_era.emoji}</div>
+                        <h2 class="era-title fade-up delay-2">${d.movie_era.era}</h2>
+                        <p class="era-subtitle fade-up delay-3">${d.movie_era.subtitle}</p>
+                    </div>
+                `);
+            }
+
+            // 9. SHARE
+            const posters = movies.slice(0, 4).map(f => {
+                const has = f.poster && !f.poster.includes('empty');
+                return `<div class="share-poster">${has ? `<img src="${f.poster}" alt="">` : ''}</div>`;
+            }).join('');
+
+            slides.push(`
+                <div class="slide slide-share" data-idx="${slides.length}">
+                    <h2 class="share-title fade-up">That's a Wrap! 🎬</h2>
+                    <p class="share-subtitle fade-up delay-1">${d.display_name}'s ${year} in film</p>
+                    <div class="share-card fade-up delay-2">
+                        <div class="share-posters">${posters}</div>
+                        <div class="share-stats">
+                            <div class="share-stat">
+                                <div class="share-stat-num">${d.films_logged || 0}</div>
+                                <div class="share-stat-label">Films</div>
+                            </div>
+                            <div class="share-stat">
+                                <div class="share-stat-num">${d.hours_watched || '—'}</div>
+                                <div class="share-stat-label">Hours</div>
+                            </div>
+                            <div class="share-stat">
+                                <div class="share-stat-num">★${d.average_rating || '?'}</div>
+                                <div class="share-stat-label">Avg</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="share-btns">
+                        <button class="btn-share" onclick="shareWrapped()">Share My Wrapped 📱</button>
+                        <button class="btn-restart" onclick="restart()">Try Another User</button>
+                    </div>
+                </div>
+            `);
+
+            slidesContainer.innerHTML = slides.join('');
+            slideCount = slides.length;
+
+            // Dots
+            dotsContainer.innerHTML = Array(slideCount).fill(0).map((_, i) =>
+                `<div class="dot ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})"></div>`
+            ).join('');
+
+            // Animate first slide
+            setTimeout(() => animateNum('filmNum', d.films_logged || 0), 400);
+        }
+
+        // Animate number
+        function animateNum(id, target, duration = 1200) {
+            const el = document.getElementById(id);
+            if (!el || target === 0) { if (el) el.textContent = target; return; }
+
+            const start = performance.now();
+            const update = (now) => {
+                const prog = Math.min((now - start) / duration, 1);
+                const ease = 1 - Math.pow(1 - prog, 3);
+                el.textContent = Math.round(target * ease).toLocaleString();
+                if (prog < 1) requestAnimationFrame(update);
+            };
+            requestAnimationFrame(update);
+        }
+
+        // Scroll observer
+        function setupObserver() {
+            const slides = document.querySelectorAll('.slide');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const idx = parseInt(entry.target.dataset.idx);
+                        currentSlide = idx;
+                        updateDots(idx);
+
+                        // Slide-specific animations
+                        if (idx === 1 && data) {
+                            const days = data.days_equivalent || (data.hours_watched ? Math.round(data.hours_watched / 24 * 10) / 10 : 0);
+                            animateNum('daysNum', days, 1000);
+                        }
+
+                        if (entry.target.classList.contains('slide-genre')) {
+                            setTimeout(() => {
+                                entry.target.querySelectorAll('.genre-bar').forEach(bar => {
+                                    bar.style.width = bar.dataset.pct + '%';
+                                });
+                            }, 200);
+                        }
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            slides.forEach(s => observer.observe(s));
+        }
+
+        function updateDots(active) {
+            document.querySelectorAll('.dot').forEach((d, i) => {
+                d.classList.toggle('active', i === active);
+            });
+        }
+
+        function goToSlide(idx) {
+            const slide = document.querySelector(`.slide[data-idx="${idx}"]`);
+            if (slide) slide.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function shareWrapped() {
+            if (!data) return;
+            const text = `🎬 My ${data.year} Letterboxd Wrapped!\n\n` +
+                `📽️ ${data.films_logged || 0} films\n` +
+                `⏱️ ${data.hours_watched || '?'} hours\n` +
+                `⭐ ${data.average_rating || '?'} avg rating\n` +
+                `🎭 "${data.personality?.type || 'Film Lover'}"\n\n` +
+                `Get yours! 🍿`;
+
+            if (navigator.share) {
+                navigator.share({ title: 'My Letterboxd Wrapped', text });
+            } else {
+                navigator.clipboard.writeText(text);
+                alert('Copied to clipboard! 📋');
+            }
+        }
+
+        function restart() {
+            wrapped.classList.remove('active');
+            landing.classList.add('active');
+            usernameInput.value = '';
+            yearBtns.classList.remove('visible');
+            generateBtn.disabled = true;
+            currentSlide = 0;
+            data = null;
+        }
+
+        // Keyboard nav
+        document.addEventListener('keydown', (e) => {
+            if (!wrapped.classList.contains('active')) return;
+            if (e.key === 'ArrowDown' || e.key === ' ') {
+                e.preventDefault();
+                goToSlide(Math.min(currentSlide + 1, slideCount - 1));
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                goToSlide(Math.max(currentSlide - 1, 0));
+            }
+        });
+    </script>
+</body>
+</html>
