@@ -37,5 +37,5 @@ COPY . .
 # Expose port
 EXPOSE 10000
 
-# Start command
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:10000", "--timeout", "120"]
+# Start command with extended timeout for scraping operations
+CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:10000", "--timeout", "300", "--workers", "1", "--threads", "2"]
