@@ -25,23 +25,15 @@ CORS(app)
 _driver = None
 
 def get_driver():
-    """Get or create a headless Chrome driver with memory-optimized settings"""
+    """Get or create a headless Chrome driver"""
     global _driver
     if _driver is None:
         options = Options()
-        options.add_argument('--headless=new')
+        options.add_argument('--headless')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument('--disable-gpu')
-        options.add_argument('--disable-extensions')
-        options.add_argument('--disable-plugins')
-        options.add_argument('--disable-images')
-        options.add_argument('--blink-settings=imagesEnabled=false')
-        options.add_argument('--window-size=1280,720')
-        options.add_argument('--single-process')
-        options.add_argument('--disable-software-rasterizer')
-        options.add_argument('--memory-pressure-off')
-        options.add_argument('--max_old_space_size=256')
+        options.add_argument('--window-size=1920,1080')
         options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
         
         # Use pre-installed ChromeDriver if available (Docker), otherwise use webdriver-manager
