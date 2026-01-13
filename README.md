@@ -1,4 +1,6 @@
 # 🎬 Letterboxd Wrapped
+<img width="1113" height="831" alt="image" src="https://github.com/user-attachments/assets/1e70abe2-99d6-414f-8e40-3f9b2cf8b0a3" />
+
 
 **Your Year in Film** - A beautiful, Spotify Wrapped-style visualization for your Letterboxd viewing history!
 
@@ -117,3 +119,4 @@ MIT - Feel free to use and modify!
 ---
 
 Made with 🍿 for movie lovers everywhere
+
